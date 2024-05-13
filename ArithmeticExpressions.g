@@ -56,14 +56,13 @@ classDec:	Modifier? Class VAR* '{' stmt* '}' ->^(ClassDec Modifier? Class VAR '{
 
 stmt    :   (
 	decl -> ^(Decl decl)
-	|
-init_4	-> ^(Init_4 init_4)
+	
 	|big_init -> ^(Big_init big_init)
 	|main_method->^(Main_METHOD main_method)
-	|ifstmt -> ^(Ifstmt ifstmt)
 	|whilestmt -> ^(Whilestmt whilestmt)
 	|forloop -> ^(Forloop forloop)
 	|assigment -> ^(Assigment assigment)
+	|big_if -> ^(Ifstmt big_if)
 	|method -> ^(Method method)
 	|string_dec -> ^(String_Dec string_dec)
 	|initialize -> ^(Initialize initialize)
@@ -99,33 +98,47 @@ return_type
 initialize: (types('['']')? VAR SEMICOLON|VAR* SEMICOLON);
 
 initialize_1
-	:	VAR '=' (New|VAR) Dot? VAR '('(NUM|VAR)?','?(NUM|VAR)? ')' ;
+	:	VAR '=' (New|VAR) Dot? VAR '('? (NUM|VAR)?','?(NUM|VAR)? ')'? ;
 sys_print
 	:	System Dot Out Dot Println '('(NUM|VAR Dot VAR '('NUM?')')  ')' SEMICOLON;
 object	:	ob_cho | VAR? | NUM;
 
 ob_body :	('!')? VAR Dot VAR '(' (NUM|VAR)  (generalArithExpr) ')';
 ob_cho	:('!')? VAR Dot VAR '(' (NUM|VAR)?  ')' | ob_body;	
+
+if_head  :    
+	'if' '(' (if_this | if_op)  ')'  ;
+if_this	:	 'this''.' VAR '(' var_num (',' var_num)? ')';
+
+if_op: term (( '<' | '>' | '=' )^  term)* ;
+
+
+if_ch	:	else_b | elseif_b |if_body;
+
+else_b	:	 'else' ( stmt* |  ('{')  stmt* ( '}') ) ;
+elseif_b	 :  'else if' '(' object ')'	( stmt* |  ('{')  stmt* ( '}') ) ;
+if_body : ( stmt* | ('{')  stmt*  ( '}') ) ;
+ifstmt_1 
+	:	if_head if_ch;
+big_if	:	ifstmt_1  ;
+
+
 params	:	'('((types VAR|VAR VAR) (',' types VAR)*)? ')';
 decl    :   
 	int_dec	-> ^(Int_dec int_dec)
 	|double_dec -> ^(Double_dec double_dec)
 	;
 	while_condition
-  	:	'(' condition ')'|object;
+  	:	'(' condition ')'|object|cond;
+  	cond: var_num ( '<' | '>' | '=' )? var_num ;
 whilestmt	:	
-	'while' '(' while_condition ')' '{' stmt* '}'
-	 -> ^(Whilestmt 'while' '(' while_condition ')' '{' stmt* '}')
+	'while' '(' while_condition ')' '{' stmt* '}'? ('return' return_type SEMICOLON)? '}'? 
+	 -> ^(Whilestmt 'while' '(' while_condition ')' '{' stmt* 'return' return_type SEMICOLON'}')
 	; 
 	
 	//ifstmt_2  :    
 	//'if' '(' if_cond ')' VAR ('{')? stmt* ('}')?('else' ('{')? stmt* ('}')?)?; 
-ifstmt  :    
-	'if' '(' ('!' )? ('(')? if_nor (')')? ')' ('{')? stmt* ('}')? ('else' ('{')? stmt* ('}')?)? ('else' ('{')? stmt* ('}')?)?;
-	 
- 
-  if_cond:  if_nor  ; 
- if_nor :	 object (( '>' | '<' |'&&' )^  object  )*;
+
 forloop	:   
 	'for' '(' (decl) (condition) SEMICOLON (VAR change) ')' '{' stmt* '}'
 	;
@@ -151,17 +164,18 @@ change	:
 	('++'|'--'|('+='|'-=')generalArithExpr)
 	;
 op	:	Plus|Minus;
- init_1	:var_num '=' 'this' '.' VAR '(' (VAR|NUM)?')';
- init_2	:types var_num;
- init_3	:types '[' ']'var_num;
- init_4	:var_num '='var_num op var_num;	
+ init_1	:var_num '=' 'this' '.' VAR '(' (VAR|NUM)?')' SEMICOLON?;
+ init_2	:types var_num SEMICOLON?;
+ init_3	:types '[' ']'var_num SEMICOLON?;
+ init_4	:var_num '='var_num op var_num SEMICOLON?;	
+ init_5	:var_num '=' var_num SEMICOLON?;	
+ init_6	:var_num '['var_num ']''='var_num op var_num SEMICOLON?;
+ init_7	:var_num '=' var_num '*' '(''this' '.' var_num '(' var_num generalArithExpr   ')' ')' SEMICOLON ;
+ init_8	:var_num '=' VAR '[' (VAR|NUM)? ']' SEMICOLON ;
+ var_num:VAR|NUM;	
 
- init_5	:var_num '=' var_num;	
- init_6	:var_num '['var_num ']''='var_num op var_num;
-var_num:VAR|NUM;	
  big_init
- 	:init_1|init_2|init_3|init_4|init_5|init_6;
- 
+ 	:init_1|init_2|init_3|init_4|init_5|init_6|init_7|init_8;
  
 
 
@@ -228,11 +242,12 @@ New	:	'new';
 Dot	:	'.';
 Out	:	'out';
 Println	:	'println';
-
+Br_close:	'}';
+Br_open	:	'{';
 Args	:	'args';
 Static	:	'static';
 Main	:	'main';
-types	:	STRING|BOOLEAN|DOUBLE|INT;
+types	:	STRING|BOOLEAN|DOUBLE|INT ;
 AndOr	:	'&&'|'||';
 Modifier:	'private'|'public';   
 Fun	: 'sin' | 'cos'| 'tan' ;
