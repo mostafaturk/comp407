@@ -132,7 +132,7 @@ decl    :
   	:	'(' condition ')'|object|cond;
   	cond: var_num ( '<' | '>' | '=' )? var_num ;
 whilestmt	:	
-	'while' '(' while_condition ')' '{' stmt* '}'? ('return' return_type SEMICOLON)?  
+	'while' '(' while_condition ')' '{' stmt* '}'? ('return' return_type SEMICOLON)? '}'? 
 	 -> ^(Whilestmt 'while' '(' while_condition ')' '{' stmt* 'return' return_type SEMICOLON'}')
 	; 
 	
